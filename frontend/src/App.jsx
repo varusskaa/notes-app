@@ -1,3 +1,5 @@
+import DOMPurify from 'dompurify';
+
 import { useEffect, useState } from 'react';
 import { api } from './api';
 
@@ -113,7 +115,16 @@ function Notes({ onAuthError }) {
           <h3>{note.title}</h3>
           {note.username && <small>de {note.username}</small>}
           {/* Permitem formatare HTML în notițe (bold, italic...) */}
-          <div dangerouslySetInnerHTML={{ __html: note.content }} />
+          <div 
+            dangerouslySetInnerHTML={{ 
+              __html: DOMPurify.sanitize(note.content, { 
+                ALLOWED_TAGS: ['strong', 'em', 'br'], 
+                ALLOWED_ATTR: [] 
+              }) 
+            }} 
+          />
+
+          
           {tab === 'mine' && <button onClick={() => remove(note.id)}>Șterge</button>}
         </article>
       ))}

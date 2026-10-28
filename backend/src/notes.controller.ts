@@ -19,20 +19,28 @@ import { DbService } from './db.service';
 export class NotesController {
   constructor(private db: DbService) {}
 
-  // Notițele mele, cu căutare după titlu
+// Модифицированный метод list для 6 варианта
   @Get()
   async list(@Req() req, @Query('search') search = '') {
+    // 1. Проверка длины по 6 варианту (максимум 80 символов)
+    if (search.length > 80) {
+      throw new BadRequestException('Căutarea nu poate depăși 80 de caractere');
+    }
+
     try {
+      // 2. Параметризованный запрос с поиском по заголовку ИЛИ контенту ($1)
       const result = await this.db.query(
         `SELECT id, title, content, is_public, created_at FROM notes
-         WHERE user_id = ${req.user.sub} AND title ILIKE '%${search}%'
+         WHERE user_id = $1 AND (title ILIKE $2 OR content ILIKE $2)
          ORDER BY id DESC`,
+        [req.user.sub, `%${search}%`],
       );
       return result.rows;
     } catch (err) {
       throw new BadRequestException(err.message);
     }
   }
+  
 
   // Notițele publice ale tuturor utilizatorilor
   @Get('public')
